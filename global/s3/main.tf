@@ -1,7 +1,7 @@
 terraform{
   backend "s3"{
     bucket="terraform-ch3"
-    key="~/terraform/ch3/terraform.tfstate"
+    key="~/terraform/ch3/global/s3/terraform.tfstate"
     region="us-east-2"
   }
 }
@@ -15,4 +15,3 @@ resource "aws_s3_bucket" "terraform_state"{
   versioning {enabled = true}
   lifecycle {prevent_destroy = true}
 }
-
