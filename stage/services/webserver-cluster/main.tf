@@ -11,24 +11,37 @@ terraform{
 provider "aws" {
   region= "us-east-2"
 }
-
+#get data on remote state
+data "terraform_remote_state" "db"{
+	backend="s3"
+	config{
+		bucket="terraform-ch3"
+    key="~/terraform/ch3/stage/datastores/mysql/terraform.tfstate"
+    region="us-east-2"
+	}
+}
 #get data on existing domain
 data "aws_route53_zone" "selected"{
   name     = "bradsbox.info."
 }
 #get data on availability zones
 data "aws_availability_zones" "all" {}
+#template file data source
+data "template_file" "user_data"{
+	template = "${file("user-data.sh")}"
+	vars{
+		serverport = "${var.serverport}"
+		db_address = "1.1.1.1/24"
+		db_port    = "0000"
+	}
+}
 
 #setup launch config for ec2 micro instances
 resource "aws_launch_configuration" "ch2test" {
   image_id        = "ami-40d4f025"
   instance_type   ="t2.micro"
   security_groups =["${aws_security_group.instance.id}"]
-  user_data = <<-EOF
-	    #!/bin/bash
-	    echo "Hello, World!" > index.html
-	    nohup busybox httpd -f -p "${var.serverport}" &
-	    EOF
+  user_data       = "${data.template_file.user_data.rendered}" 
   lifecycle {
     create_before_destroy = true
   }
